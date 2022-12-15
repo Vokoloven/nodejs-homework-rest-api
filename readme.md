@@ -1,31 +1,22 @@
-## GoIT Node.js Course Template Homework
+Documentation:
 
-Виконайте форк цього репозиторію для виконання домашніх завдань (2-6)
-Форк створить репозиторій на вашому http://github.com
+That is the simple API base for contacts. For DB used MangoDB + mongoose. For
+sending CRUD, used POSTMAN.
 
-Додайте ментора до колаборації
+---For start server with nodemon use: npm run start:dev
 
-Для кожної домашньої роботи створюйте свою гілку.
+Schema of contacts obj: { "\_id": { "$oid": "639a010a9e375c1f6364ff10" },
+"name": "Chaim Lewis", "email": "dui.in@egetlacus.ca", "phone": "(294)
+840-6685", "favorite": true }
 
-- hw02
-- hw03
-- hw04
-- hw05
-- hw06
+---GET http://localhost:3000/api/contacts/
 
-Кожна нова гілка для др повинна робитися з master
+---GET by ID http://localhost:3000/api/contacts/{:id}
 
-Після того, як ви закінчили виконувати домашнє завдання у своїй гілці, необхідно зробити пулл-реквест (PR). Потім додати ментора для рев'ю коду. Тільки після того, як ментор заапрувить PR, ви можете виконати мердж гілки з домашнім завданням у майстер.
+---POST http://localhost:3000/api/contacts/
 
-Уважно читайте коментарі ментора. Виправте зауваження та зробіть коміт у гілці з домашнім завданням. Зміни підтягнуться у PR автоматично після того, як ви відправите коміт з виправленнями на github
-Після виправлення знову додайте ментора на рев'ю коду.
+---DELETE http://localhost:3000/api/contacts/{:id}
 
-- При здачі домашньої роботи є посилання на PR
-- JS-код чистий та зрозумілий, для форматування використовується Prettier
+---PUT http://localhost:3000/api/contacts/{:id}
 
-### Команди:
-
-- `npm start` &mdash; старт сервера в режимі production
-- `npm run start:dev` &mdash; старт сервера в режимі розробки (development)
-- `npm run lint` &mdash; запустити виконання перевірки коду з eslint, необхідно виконувати перед кожним PR та виправляти всі помилки лінтера
-- `npm lint:fix` &mdash; та ж перевірка лінтера, але з автоматичними виправленнями простих помилок
+---PATCH http://localhost:3000/api/contacts/{:id}/favorite
