@@ -8,7 +8,7 @@ mongoose
   .connect(config.MONGO_URI)
   .then(() => {
     console.log('Database connection successful');
-    app.listen(config.PORT, () => console.log('Servier is running'));
+    app.listen(config.PORT, () => console.log('Server is running'));
   })
   .catch(error => {
     console.log(error.message);
