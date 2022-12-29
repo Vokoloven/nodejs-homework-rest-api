@@ -114,4 +114,22 @@ router.get('/current', authorize, async (req, res, next) => {
   }
 });
 
+router.patch('/', authorize, async (req, res, next) => {
+  try {
+    const { _id, token } = req.user;
+
+    const result = await User.findByIdAndUpdate(_id, req.body, { new: true });
+
+    const { subscription } = result;
+
+    if (!token) {
+      throw createError(401, 'Not authorized');
+    }
+
+    res.status(201).json({ subscription });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
