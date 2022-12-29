@@ -5,6 +5,7 @@ const Contact = require('../../models/contact');
 const Joi = require('joi');
 
 const { createError } = require('../../helpers/');
+const authorize = require('../../middlewares/authorize');
 
 const contactsSchema = Joi.object({
   name: Joi.string().required(),
@@ -19,16 +20,18 @@ const updateFavoriteSchema = Joi.object({
 
 const router = express.Router();
 
-router.get('/', async (req, res, next) => {
+router.get('/', authorize, async (req, res, next) => {
   try {
-    const result = await Contact.find();
+    const { _id: owner } = req.user;
+
+    const result = await Contact.find({ owner });
     res.json(result);
   } catch (error) {
     next(error);
   }
 });
 
-router.get('/:contactId', async (req, res, next) => {
+router.get('/:contactId', authorize, async (req, res, next) => {
   try {
     const { contactId } = req.params;
 
@@ -42,15 +45,17 @@ router.get('/:contactId', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', authorize, async (req, res, next) => {
   try {
+    const { _id: owner } = req.user;
+
     const { error } = contactsSchema.validate(req.body);
 
     if (error) {
       throw createError(400, error.message);
     }
 
-    const result = await Contact.create(req.body);
+    const result = await Contact.create({ ...req.body, owner });
 
     res.status(201).json(result);
   } catch (error) {
@@ -58,7 +63,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.delete('/:contactId', async (req, res, next) => {
+router.delete('/:contactId', authorize, async (req, res, next) => {
   try {
     const { contactId } = req.params;
     const result = await Contact.findByIdAndRemove(contactId);
@@ -71,7 +76,7 @@ router.delete('/:contactId', async (req, res, next) => {
   }
 });
 
-router.put('/:contactId', async (req, res, next) => {
+router.put('/:contactId', authorize, async (req, res, next) => {
   try {
     const { contactId } = req.params;
     const { error } = contactsSchema.validate(req.body);
@@ -94,7 +99,7 @@ router.put('/:contactId', async (req, res, next) => {
   }
 });
 
-router.patch('/:contactId/favorite', async (req, res, next) => {
+router.patch('/:contactId/favorite', authorize, async (req, res, next) => {
   try {
     const { error } = updateFavoriteSchema.validate(req.body);
 
