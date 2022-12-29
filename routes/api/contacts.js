@@ -21,12 +21,12 @@ const updateFavoriteSchema = Joi.object({
 const router = express.Router();
 
 router.get('/', authorize, async (req, res, next) => {
-  const { page, limit } = req.query;
+  const { page = 1, limit = 10, favorite = false } = req.query;
 
   try {
     const { _id: owner } = req.user;
 
-    const result = await Contact.find({ owner })
+    const result = await Contact.find({ owner, favorite })
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .exec();
