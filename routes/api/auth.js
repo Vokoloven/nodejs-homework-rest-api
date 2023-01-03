@@ -2,6 +2,12 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const authorize = require('../../middlewares/authorize');
+const upload = require('../../middlewares/uploader');
+const path = require('path');
+const fs = require('fs/promises');
+const Jimp = require('jimp');
+
+const gravatar = require('gravatar');
 
 const User = require('../../models/user.js');
 const createHashPassword = require('../../helpers/createHashPassword');
@@ -47,8 +53,13 @@ router.post('/signup', async (req, res, next) => {
     }
 
     const hashedPassword = await createHashPassword(password);
+    const avatarURL = gravatar.url(email);
 
-    const newUser = await User.create({ email, password: hashedPassword });
+    const newUser = await User.create({
+      avatarURL,
+      email,
+      password: hashedPassword,
+    });
 
     res.status(201).json({ email: newUser.email });
   } catch (error) {
@@ -131,5 +142,47 @@ router.patch('/', authorize, async (req, res, next) => {
     next(error);
   }
 });
+
+router.patch(
+  '/avatars',
+  authorize,
+  upload.single('avatar'),
+  async (req, res, next) => {
+    try {
+      const { _id } = req.user;
+      const { token } = req.user;
+
+      const { path: tempDir, originalname } = req.file;
+
+      const [extension] = originalname.split('.').reverse();
+      const newName = `${_id}.${extension}`;
+      const uploadDir = path.join(
+        __dirname,
+        '../../',
+        'public',
+        'avatars',
+        newName
+      );
+
+      await fs.rename(tempDir, uploadDir);
+      const avatarURL = path.join('avatars', newName);
+
+      Jimp.read(uploadDir, (err, image) => {
+        if (err) throw err;
+        image.resize(250, 250).write(uploadDir);
+      });
+
+      await User.findByIdAndUpdate(_id, { avatarURL });
+      res.status(200).json(avatarURL);
+
+      if (!token) {
+        throw createError(401, { message: 'Not authorized' });
+      }
+    } catch (error) {
+      await fs.unlink(req.file.path);
+      next(error);
+    }
+  }
+);
 
 module.exports = router;
