@@ -168,7 +168,6 @@ router.patch(
       const avatarURL = path.join('avatars', newName);
 
       Jimp.read(uploadDir, (err, image) => {
-        console.log(image);
         if (err) throw err;
         image.resize(250, 250).write(uploadDir);
       });
