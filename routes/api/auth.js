@@ -6,6 +6,8 @@ const upload = require('../../middlewares/uploader');
 const path = require('path');
 const fs = require('fs/promises');
 const Jimp = require('jimp');
+const { nanoid } = require('nanoid');
+const sendMail = require('../../helpers/mail.js');
 
 const gravatar = require('gravatar');
 
@@ -33,6 +35,12 @@ const loginUserSchema = Joi.object({
     .required(),
 });
 
+const verifyUserSchema = Joi.object({
+  email: Joi.string()
+    .pattern(/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/)
+    .required(),
+});
+
 const SECRET_KEY = String(process.env.SECRET_KEY);
 
 const router = express.Router();
@@ -55,11 +63,22 @@ router.post('/signup', async (req, res, next) => {
     const hashedPassword = await createHashPassword(password);
     const avatarURL = gravatar.url(email);
 
+    const verificationToken = nanoid();
+
     const newUser = await User.create({
       avatarURL,
       email,
       password: hashedPassword,
+      verificationToken,
     });
+
+    const mail = {
+      to: 'vokolovens@gmail.com',
+      subject: 'Email verification',
+      html: `<a href='http://localhost:3000/api/users/verify/${verificationToken}'>Verify User</a>`,
+    };
+
+    await sendMail(mail);
 
     res.status(201).json({ email: newUser.email });
   } catch (error) {
@@ -86,6 +105,10 @@ router.post('/login', async (req, res, next) => {
 
     if (!isValidPassword) {
       throw createError(401, 'Email or password is wrong');
+    }
+
+    if (!user.verificationToken) {
+      throw createError(401, 'User nor verified');
     }
 
     const payload = { id: user._id };
@@ -184,5 +207,58 @@ router.patch(
     }
   }
 );
+
+router.get('/verify/:verificationToken', async (req, res, next) => {
+  try {
+    const { verificationToken } = req.params;
+
+    const user = await User.findOne({ verificationToken });
+
+    if (!user) {
+      throw createError(404, 'User not found');
+    }
+
+    await User.findByIdAndUpdate(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
+
+    res.status(200, { message: 'Verification successful' });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/users/verify', async (req, res, next) => {
+  try {
+    const { error } = verifyUserSchema.validate(req.body);
+    if (error) {
+      throw createError(400, error.message);
+    }
+
+    const { email } = req.body;
+    const user = await User.findOne(email);
+
+    if (!user) {
+      throw createError(404, 'User not found');
+    }
+
+    if (user.verify) {
+      throw createError(400, 'Verification has already been passed');
+    }
+
+    const mail = {
+      to: 'vokolovens@gmail.com',
+      subject: 'Email verification',
+      html: `<a href='http://localhost:3000/api/users/verify/${user.verificationToken}'>Verify User</a>`,
+    };
+
+    await sendMail(mail);
+
+    res.json({ message: 'Verification email sent' });
+  } catch (error) {
+    next(error);
+  }
+});
 
 module.exports = router;
