@@ -229,7 +229,7 @@ router.get('/verify/:verificationToken', async (req, res, next) => {
   }
 });
 
-router.post('/users/verify', async (req, res, next) => {
+router.post('/verify', async (req, res, next) => {
   try {
     const { error } = verifyUserSchema.validate(req.body);
     if (error) {
@@ -237,7 +237,8 @@ router.post('/users/verify', async (req, res, next) => {
     }
 
     const { email } = req.body;
-    const user = await User.findOne(email);
+
+    const user = await User.findOne({ email });
 
     if (!user) {
       throw createError(404, 'User not found');
